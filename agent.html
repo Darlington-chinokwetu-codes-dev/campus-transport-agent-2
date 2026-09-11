@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Campus Transport — Command Center</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-2: #0e1428;
+    --panel: #121a30;
+    --panel-2: #182241;
+    --border: #23305a;
+    --text: #e7ecf7;
+    --muted: #93a0c2;
+    --accent: #5b8cff;
+    --accent-2: #22d3a6;
+    --amber: #f2b544;
+    --danger: #ff6b6b;
+    --user: #23408f;
+    --bot: #182241;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 800px at 12% -10%, #16214a 0%, transparent 55%),
+                radial-gradient(1000px 700px at 110% 0%, #10312b 0%, transparent 50%),
+                var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ---------- Sidebar ---------- */
+  aside {
+    width: 246px; flex: none; border-right: 1px solid var(--border);
+    background: rgba(14, 20, 40, 0.75); backdrop-filter: blur(8px);
+    display: flex; flex-direction: column; padding: 18px 14px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; padding: 6px 8px 18px; }
+  .brand .logo {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center; font-size: 22px;
+    box-shadow: 0 6px 18px rgba(91, 140, 255, 0.35);
+  }
+  .brand h1 { font-size: 15px; margin: 0; font-weight: 700; letter-spacing: 0.2px; }
+  .brand p { margin: 2px 0 0; font-size: 11px; color: var(--muted); }
+
+  nav { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+  .nav-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 14px 10px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px;
+    cursor: pointer; color: var(--muted); font-size: 14px; font-weight: 500;
+    border: 1px solid transparent; transition: all 0.15s;
+  }
+  .nav-item:hover { background: var(--panel); color: var(--text); }
+  .nav-item.active { background: var(--panel-2); color: var(--text); border-color: var(--border); }
+  .nav-item .ico { font-size: 17px; width: 22px; text-align: center; }
+
+  .side-foot { margin-top: auto; padding: 10px 8px 0; font-size: 11px; color: var(--muted); }
+  .side-foot .status { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 10px var(--accent-2); }
+  .side-foot a { color: var(--accent); cursor: pointer; }
+
+  /* ---------- Main ---------- */
+  .stage { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    display: flex; align-items: center; gap: 14px; padding: 16px 26px;
+    border-bottom: 1px solid var(--border); background: rgba(18, 26, 48, 0.55);
+  }
+  .topbar h2 { font-size: 18px; margin: 0; font-weight: 650; }
+  .topbar p { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
+  .badge {
+    margin-left: auto; font-size: 11px; padding: 6px 12px; border-radius: 20px;
+    border: 1px solid var(--border); color: var(--muted); background: var(--panel);
+  }
+
+  .view { flex: 1; overflow-y: auto; padding: 24px 26px; display: none; }
+  .view.active { display: block; }
+
+  /* ---------- Dashboard ---------- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px;
+  }
+  .card .k { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .card .v { font-size: 30px; font-weight: 700; margin-top: 8px; }
+  .card .s { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .v.good { color: var(--accent-2); } .v.warn { color: var(--amber); } .v.bad { color: var(--danger); }
+
+  .section-title { font-size: 14px; font-weight: 650; margin: 26px 0 12px; color: var(--text); }
+  .panelbox { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+  .role-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .role-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .role-card:hover { border-color: var(--accent); transform: translateY(-2px); background: var(--panel-2); }
+  .role-card .ic { font-size: 26px; }
+  .role-card h3 { margin: 12px 0 6px; font-size: 16px; }
+  .role-card p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .role-card .go { margin-top: 14px; font-size: 12.5px; color: var(--accent); font-weight: 600; }
+
+  .cap-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .cap { font-size: 11.5px; color: var(--muted); background: var(--bg-2); border: 1px solid var(--border); padding: 6px 11px; border-radius: 20px; }
+
+  /* ---------- Chat (shared) ---------- */
+  .chat-shell { display: flex; flex-direction: column; height: 100%; }
+  .chat-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 8px; }
+  .msg { display: flex; gap: 12px; max-width: 92%; animation: rise 0.25s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .avatar { width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center; font-size: 16px; }
+  .msg.bot .avatar { background: var(--panel-2); border: 1px solid var(--border); }
+  .msg.user .avatar { background: var(--user); }
+  .bubble { padding: 12px 15px; border-radius: 14px; line-height: 1.55; font-size: 14.5px; border: 1px solid var(--border); }
+  .msg.bot .bubble { background: var(--bot); border-top-left-radius: 4px; }
+  .msg.user .bubble { background: var(--user); border-top-right-radius: 4px; border-color: #2f4aa0; }
+  .bubble h1, .bubble h2, .bubble h3 { margin: 8px 0 6px; font-size: 15px; }
+  .bubble p { margin: 6px 0; }
+  .bubble ul, .bubble ol { margin: 6px 0; padding-left: 20px; }
+  .bubble li { margin: 3px 0; }
+  .bubble code { background: #0c1226; padding: 1px 6px; border-radius: 6px; font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
+  .bubble pre { background: #0c1226; padding: 12px; border-radius: 10px; overflow-x: auto; }
+  .bubble pre code { background: none; padding: 0; }
+  .bubble table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 13px; }
+  .bubble th, .bubble td { border: 1px solid var(--border); padding: 6px 9px; text-align: left; }
+  .bubble th { background: var(--panel-2); }
+  .bubble strong { color: #fff; }
+  .bubble a { color: var(--accent); }
+
+  .typing { display: inline-flex; gap: 5px; align-items: center; }
+  .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite ease-in-out; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: 0.3; } 40% { opacity: 1; } }
+
+  .suggestions { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 10px; }
+  .chip {
+    background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+    padding: 8px 13px; border-radius: 20px; font-size: 12.5px; cursor: pointer; transition: all 0.15s;
+  }
+  .chip:hover { color: var(--text); border-color: var(--accent); background: var(--panel-2); }
+
+  .composer { display: flex; gap: 10px; align-items: flex-end; margin-top: 8px; }
+  textarea {
+    flex: 1; resize: none; background: var(--panel); color: var(--text);
+    border: 1px solid var(--border); border-radius: 14px; padding: 13px 15px;
+    font-size: 14.5px; font-family: inherit; line-height: 1.4; max-height: 150px; outline: none; transition: border 0.15s;
+  }
+  textarea:focus { border-color: var(--accent); }
+  button.send {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #06121f;
+    border: none; border-radius: 14px; padding: 0 22px; height: 48px; font-weight: 700;
+    font-size: 14px; cursor: pointer; transition: transform 0.1s, opacity 0.15s;
+  }
+  button.send:hover { transform: translateY(-1px); }
+  button.send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .hint { font-size: 12px; color: var(--muted); background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <!-- ============ SIDEBAR ============ -->
+  <aside>
+    <div class="brand">
+      <div class="logo">&#128652;</div>
+      <div>
+        <h1>Campus Transport</h1>
+        <p>Command Center &middot; VEDA-2K26</p>
+      </div>
+    </div>
+
+    <div class="nav-label">Overview</div>
+    <nav>
+      <div class="nav-item active" data-view="dashboard"><span class="ico">&#128202;</span> Dashboard</div>
+    </nav>
+
+    <div class="nav-label">Assistants</div>
+    <nav>
+      <div class="nav-item" data-view="student"><span class="ico">&#127891;</span> Student Assistant</div>
+      <div class="nav-item" data-view="faculty"><span class="ico">&#128218;</span> Faculty Assistant</div>
+      <div class="nav-item" data-view="admin"><span class="ico">&#128736;</span> Admin Console</div>
+    </nav>
+
+    <div class="nav-label">Insights</div>
+    <nav>
+      <div class="nav-item" data-view="safety"><span class="ico">&#128737;</span> Safety &amp; Incidents</div>
+    </nav>
+
+    <div class="side-foot">
+      <div class="status"><span class="dot"></span> Agent Live</div>
+      <div>Endpoint: <span id="epShort"></span></div>
+      <a id="editEp">change endpoint</a>
+    </div>
+  </aside>
+
+  <!-- ============ STAGE ============ -->
+  <div class="stage">
+    <div class="topbar">
+      <div>
+        <h2 id="viewTitle">Dashboard</h2>
+        <p id="viewSub">Live overview of the campus transport network</p>
+      </div>
+      <div class="badge">PS-03 &middot; Campus Transport Agent</div>
+    </div>
+
+    <!-- ---------- Dashboard ---------- -->
+    <section class="view active" id="view-dashboard">
+      <div class="grid">
+        <div class="card"><div class="k">&#128652; Active Buses</div><div class="v good">6</div><div class="s">Across routes R1–R4</div></div>
+        <div class="card"><div class="k">&#9201;&#65039; Delayed</div><div class="v warn">1</div><div class="s">B3 — traffic on R2</div></div>
+        <div class="card"><div class="k">&#128295; In Maintenance</div><div class="v bad">1</div><div class="s">B5 — out of service</div></div>
+        <div class="card"><div class="k">&#128680; Open Incidents</div><div class="v warn">3</div><div class="s">1 flagged for safety</div></div>
+      </div>
+
+      <div class="section-title">Choose your role</div>
+      <div class="role-grid">
+        <div class="role-card" data-view="student">
+          <div class="ic">&#127891;</div>
+          <h3>Student Assistant</h3>
+          <p>Find your bus, check seats, get the fastest route across campus, and know about delays before you leave.</p>
+          <div class="go">Open Student Assistant &rarr;</div>
+        </div>
+        <div class="role-card" data-view="faculty">
+          <div class="ic">&#128218;</div>
+          <h3>Faculty Assistant</h3>
+          <p>Plan trips around your teaching schedule, check reliability of routes, and get arrival estimates for meetings.</p>
+          <div class="go">Open Faculty Assistant &rarr;</div>
+        </div>
+        <div class="role-card" data-view="admin">
+          <div class="ic">&#128736;</div>
+          <h3>Admin Console</h3>
+          <p>Monitor fleet status, identify overcrowded routes, review delays &amp; incidents, and get rerouting recommendations.</p>
+          <div class="go">Open Admin Console &rarr;</div>
+        </div>
+      </div>
+
+      <div class="section-title">System capabilities</div>
+      <div class="panelbox">
+        <div class="cap-strip">
+          <span class="cap">Real-time bus tracking</span>
+          <span class="cap">Seat availability</span>
+          <span class="cap">Delay detection &amp; reasons</span>
+          <span class="cap">Route condition analysis</span>
+          <span class="cap">Best-route recommendation</span>
+          <span class="cap">Overcrowding alerts</span>
+          <span class="cap">Incident &amp; safety reporting</span>
+          <span class="cap">Fleet analytics</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Student ---------- -->
+    <section class="view" id="view-student">
+      <div class="hint">&#127891; <strong>Student mode</strong> — ask about your bus, seat availability, delays, or the fastest way to get across campus. Answers are live from the transport network.</div>
+      <div class="chat-shell">
+        <div class="chat-scroll" id="scroll-student"></div>
+        <div class="suggestions" data-target="student">
+          <div class="chip">Which buses are delayed right now?</div>
+          <div class="chip">Best route from S1 to S12?</div>
+          <div class="chip">Where can I still get a seat?</div>
+          <div class="chip">When is the next bus at stop S4?</div>
+        </div>
+        <div class="composer">
+          <textarea data-target="student" rows="1" placeholder="Ask about your bus, seats, routes, delays..."></textarea>
+          <button class="send" data-target="student">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Faculty ---------- -->
+    <section class="view" id="view-faculty">
+      <div class="hint">&#128218; <strong>Faculty mode</strong> — plan trips around your schedule, check how reliable a route is, and get arrival estimates for meetings and classes.</div>
+      <div class="chat-shell">
+        <div class="chat-scroll" id="scroll-faculty"></div>
+        <div class="suggestions" data-target="faculty">
+          <div class="chip">Which route is most reliable this morning?</div>
+          <div class="chip">If I leave from S2 now, when do I reach S10?</div>
+          <div class="chip">Are there delays that affect a 10:00 class?</div>
+          <div class="chip">Which routes are running on schedule?</div>
+        </div>
+        <div class="composer">
+          <textarea data-target="faculty" rows="1" placeholder="Ask about schedules, reliability, arrival times..."></textarea>
+          <button class="send" data-target="faculty">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Admin ---------- -->
+    <section class="view" id="view-admin">
+      <div class="hint">&#128736; <strong>Admin mode</strong> — monitor the fleet, spot overcrowded routes, review delays and incidents, and ask for rerouting recommendations.</div>
+      <div class="chat-shell">
+        <div class="chat-scroll" id="scroll-admin"></div>
+        <div class="suggestions" data-target="admin">
+          <div class="chip">Give me a full fleet status summary.</div>
+          <div class="chip">Which routes are overcrowded and need extra buses?</div>
+          <div class="chip">List all delayed buses and the reasons.</div>
+          <div class="chip">Recommend a reroute for the high-demand route.</div>
+        </div>
+        <div class="composer">
+          <textarea data-target="admin" rows="1" placeholder="Ask for fleet status, overcrowding, reroute advice..."></textarea>
+          <button class="send" data-target="admin">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Safety ---------- -->
+    <section class="view" id="view-safety">
+      <div class="hint">&#128737; <strong>Safety &amp; Incidents</strong> — review reported incidents, safety-flagged buses, and maintenance issues across the network.</div>
+      <div class="chat-shell">
+        <div class="chat-scroll" id="scroll-safety"></div>
+        <div class="suggestions" data-target="safety">
+          <div class="chip">Any safety incidents today?</div>
+          <div class="chip">Which buses are flagged for safety?</div>
+          <div class="chip">Show all open incidents with descriptions.</div>
+          <div class="chip">Which buses need maintenance?</div>
+        </div>
+        <div class="composer">
+          <textarea data-target="safety" rows="1" placeholder="Ask about incidents, safety flags, maintenance..."></textarea>
+          <button class="send" data-target="safety">Send</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+  // ---- Configuration -------------------------------------------------------
+  const DEFAULT_ENDPOINT = "https://neverjunior05.app.n8n.cloud/webhook/campus-transport-chat";
+  let ENDPOINT = localStorage.getItem("ct_endpoint") || DEFAULT_ENDPOINT;
+  const SESSION_BASE = "web-" + Date.now();
+
+  // Per-role framing prepended to the user's message so the agent tailors tone.
+  const ROLE_PREFIX = {
+    student: "[Role: Student] ",
+    faculty: "[Role: Faculty] ",
+    admin:   "[Role: Transport Admin] ",
+    safety:  "[Role: Safety Officer] "
+  };
+  // Each role keeps an independent conversation session.
+  const SESSIONS = {
+    student: SESSION_BASE + "-student",
+    faculty: SESSION_BASE + "-faculty",
+    admin:   SESSION_BASE + "-admin",
+    safety:  SESSION_BASE + "-safety"
+  };
+  const GREETING = {
+    student: "<p><strong>Hi! I'm your Student Transport Assistant.</strong></p><p>Ask me where your bus is, whether there are seats, or the fastest way across campus.</p>",
+    faculty: "<p><strong>Welcome, faculty.</strong></p><p>I can help you plan trips around your schedule and tell you how reliable each route is right now.</p>",
+    admin:   "<p><strong>Admin Console ready.</strong></p><p>Ask me for a fleet summary, overcrowding alerts, delay reports, or rerouting recommendations.</p>",
+    safety:  "<p><strong>Safety &amp; Incidents desk.</strong></p><p>Ask me about reported incidents, safety-flagged buses, or maintenance issues.</p>"
+  };
+
+  const TITLES = {
+    dashboard: ["Dashboard", "Live overview of the campus transport network"],
+    student:   ["Student Assistant", "Buses, seats, routes and delays — tailored for students"],
+    faculty:   ["Faculty Assistant", "Schedule-aware trip planning and route reliability"],
+    admin:     ["Admin Console", "Fleet monitoring, overcrowding and rerouting"],
+    safety:    ["Safety & Incidents", "Incidents, safety flags and maintenance status"]
+  };
+
+  const epShort = document.getElementById("epShort");
+  epShort.textContent = ENDPOINT.replace(/^https?:\/\//, "").slice(0, 34) + "...";
+  document.getElementById("editEp").onclick = () => {
+    const v = prompt("Webhook URL:", ENDPOINT);
+    if (v) { ENDPOINT = v.trim(); localStorage.setItem("ct_endpoint", ENDPOINT); epShort.textContent = ENDPOINT.replace(/^https?:\/\//, "").slice(0, 34) + "..."; }
+  };
+
+  // ---- Navigation ----------------------------------------------------------
+  const initialised = {};
+  function switchView(view) {
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === view));
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    const el = document.getElementById("view-" + view);
+    if (el) el.classList.add("active");
+    document.getElementById("viewTitle").textContent = TITLES[view][0];
+    document.getElementById("viewSub").textContent = TITLES[view][1];
+    // Seed the greeting the first time a chat view opens.
+    if (view !== "dashboard" && !initialised[view]) {
+      addMessage(view, "bot", GREETING[view]);
+      initialised[view] = true;
+    }
+  }
+  document.querySelectorAll("[data-view]").forEach(el => {
+    el.addEventListener("click", () => switchView(el.dataset.view));
+  });
+
+  // ---- Minimal Markdown renderer ------------------------------------------
+  function escapeHtml(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function renderMarkdown(md) {
+    let s = escapeHtml(md);
+    s = s.replace(/```([\s\S]*?)```/g, (_, c) => "<pre><code>" + c.replace(/^\n/, "") + "</code></pre>");
+    s = s.replace(/(^\|.*\|\s*\n\|[ :|-]+\|\s*\n(?:\|.*\|\s*\n?)*)/gm, (block) => {
+      const rows = block.trim().split("\n");
+      const header = rows[0].split("|").slice(1, -1).map(c => "<th>" + c.trim() + "</th>").join("");
+      const body = rows.slice(2).map(r => "<tr>" + r.split("|").slice(1, -1).map(c => "<td>" + c.trim() + "</td>").join("") + "</tr>").join("");
+      return "<table><thead><tr>" + header + "</tr></thead><tbody>" + body + "</tbody></table>";
+    });
+    s = s.replace(/^### (.*)$/gm, "<h3>$1</h3>").replace(/^## (.*)$/gm, "<h2>$1</h2>").replace(/^# (.*)$/gm, "<h1>$1</h1>");
+    s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+?)`/g, "<code>$1</code>");
+    s = s.replace(/(?:^|\n)((?:[-*] .*(?:\n|$))+)/g, (_, block) => {
+      const items = block.trim().split("\n").map(l => "<li>" + l.replace(/^[-*] /, "") + "</li>").join("");
+      return "\n<ul>" + items + "</ul>";
+    });
+    s = s.replace(/(?:^|\n)((?:\d+\. .*(?:\n|$))+)/g, (_, block) => {
+      const items = block.trim().split("\n").map(l => "<li>" + l.replace(/^\d+\. /, "") + "</li>").join("");
+      return "\n<ol>" + items + "</ol>";
+    });
+    s = s.split(/\n{2,}/).map(p => /^\s*<(ul|ol|pre|table|h\d)/.test(p) ? p : "<p>" + p.replace(/\n/g, "<br>") + "</p>").join("");
+    return s;
+  }
+
+  function addMessage(target, role, contentHtml) {
+    const scroll = document.getElementById("scroll-" + target);
+    const wrap = document.createElement("div");
+    wrap.className = "msg " + role;
+    wrap.innerHTML = '<div class="avatar">' + (role === "user" ? "&#128100;" : "&#129302;") + '</div>' +
+                     '<div class="bubble">' + contentHtml + '</div>';
+    scroll.appendChild(wrap);
+    scroll.scrollTop = scroll.scrollHeight;
+    return wrap;
+  }
+  function showTyping(target) {
+    return addMessage(target, "bot", '<div class="typing"><span></span><span></span><span></span></div>');
+  }
+
+  async function send(target, text) {
+    if (!text.trim()) return;
+    addMessage(target, "user", "<p>" + escapeHtml(text) + "</p>");
+    const btn = document.querySelector('button.send[data-target="' + target + '"]');
+    const ta = document.querySelector('textarea[data-target="' + target + '"]');
+    ta.value = ""; ta.style.height = "auto"; btn.disabled = true;
+    const typing = showTyping(target);
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: ROLE_PREFIX[target] + text, sessionId: SESSIONS[target] })
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json().catch(() => ({}));
+      const reply = data.reply || data.output || data.text || "(no reply received)";
+      typing.querySelector(".bubble").innerHTML = renderMarkdown(reply);
+    } catch (e) {
+      typing.querySelector(".bubble").innerHTML =
+        '<p style="color:var(--danger)">Could not reach the agent.</p>' +
+        '<p style="font-size:12.5px;color:var(--muted)">' + escapeHtml(e.message) +
+        '. Make sure the "Campus Transport Chat Bridge" workflow and the agent are published, and the endpoint URL is correct.</p>';
+    } finally {
+      btn.disabled = false;
+      document.getElementById("scroll-" + target).scrollTop = 1e9;
+      ta.focus();
+    }
+  }
+
+  // ---- Wire up composers, chips ------------------------------------------
+  document.querySelectorAll("button.send").forEach(btn => {
+    btn.onclick = () => { const t = btn.dataset.target; send(t, document.querySelector('textarea[data-target="' + t + '"]').value); };
+  });
+  document.querySelectorAll("textarea[data-target]").forEach(ta => {
+    ta.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(ta.dataset.target, ta.value); }
+    });
+    ta.addEventListener("input", () => { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 150) + "px"; });
+  });
+  document.querySelectorAll(".suggestions").forEach(box => {
+    box.addEventListener("click", (e) => { if (e.target.classList.contains("chip")) send(box.dataset.target, e.target.textContent); });
+  });
+</script>
+</body>
+</html>
